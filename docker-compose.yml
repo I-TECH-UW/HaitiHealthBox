@@ -1,0 +1,112 @@
+version: "3.8"
+
+services:
+  ###
+  # reverse proxy
+  ###
+  traefik:
+    image: traefik:v2.6.1
+    container_name: traefik
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - ./certs/:/etc/certs/       
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./configs/conf.yaml:/conf/conf.yaml  
+      - ./configs/traefik.yaml:/etc/traefik/traefik.yaml
+    
+  ###
+  # iSantePlus Server
+  ###
+  isanteplus:
+    container_name: isanteplus
+    hostname: isanteplus
+    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.0
+    restart: unless-stopped
+    env_file:
+      - ./isanteplus.env
+    volumes:
+      - /openmrs/data
+      - ./custom_modules:/custom_modules
+      - ./dist:/openmrs/data/frontend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+
+  isanteplus-mysql:
+    image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --sql_mode=""
+    restart: unless-stopped
+    container_name: isanteplus-mysql
+    hostname: isanteplus-mysql
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - MYSQL_DATABASE=openmrs
+      - MYSQL_ROOT_PASSWORD=debezium
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+      - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
+    volumes:
+      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
+      - /var/lib/mysql
+    ports:
+    - "3306:3306"
+
+  ###
+  # OpenHIM
+  ###
+  openhim-core:
+    container_name: openhim-core
+    hostname: openhim-core
+    image: jembi/openhim-core:latest
+    restart: unless-stopped
+    environment:
+      mongo_url: "mongodb://mongo-db/openhim"
+      mongo_atnaUrl: "mongodb://mongo-db/openhim"
+      NODE_ENV: "development"
+    healthcheck:
+      test: "node /healthcheck.js"
+      interval: 20s
+      timeout: 20s
+      retries: 2
+    networks:
+      - hie
+    volumes:
+      - ./configs/openhim/healthcheck.js:/healthcheck.js
+
+  openhim-console:
+    container_name: openhim-console
+    hostname: openhim-console
+    image: jembi/openhim-console:latest
+    restart: unless-stopped
+    volumes:
+      - ./configs/openhim-console/default.json:/usr/share/nginx/html/config/default.json
+    healthcheck:
+      test: "curl -sS http://openhim-console || exit 1"
+      interval: 10s
+      timeout: 60s
+      retries: 3
+    networks:
+      - hie
+
+  # Loads Default OpenHIM Config
+  openhim-config:
+    container_name: openhim-config
+    image: ghcr.io/i-tech-uw/openhim-config:v0.0.0
+    volumes:
+      - ./configs/openhim/test-openhim-config.json:/app/test-openhim-config.json
+    networks:
+      - hie
+
+  mongo-db:
+    container_name: mongo-db
+    image: mongo:3.4
+    volumes:
+      - /data/db
+    restart: unless-stopped
+    networks:
+      - hie
