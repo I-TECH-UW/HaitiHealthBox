@@ -23,14 +23,13 @@ services:
   isanteplus:
     container_name: isanteplus
     hostname: isanteplus
-    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.0
+    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.7
     restart: unless-stopped
     env_file:
       - ./isanteplus.env
     volumes:
       - /openmrs/data
       - ./custom_modules:/custom_modules
-      - ./dist:/openmrs/data/frontend
     logging:
       driver: "json-file"
       options:
@@ -130,16 +129,15 @@ services:
       ports:
           - "15432:5432"
       restart: always
-      environment:
-          -  POSTGRES_USER=postgres
-          -  POSTGRES_PASSWORD=admin
-          -  POSTGRES_DB=clinlims
-          -  POSTGRES_INITDB_ARGS="--auth-host=md5"
+      env_file:
+            - ./volume/database/database.env
       volumes:
-            # preserves the database between containers
-            - db-data:/var/lib/postgresql/data                
-            # files here will run on install
-            - openelis-db-data:/docker-entrypoint-initdb.d
+              # preserves the database between containers
+             - db-data:/var/lib/postgresql/data                
+              # files here will run on install
+             - ./volume/database/dbInit:/docker-entrypoint-initdb.d
+      networks:
+            - default       
       healthcheck:
           test: [ "CMD", "pg_isready", "-q", "-d", "clinlims", "-U", "clinlims" ]
           timeout: 45s
@@ -162,15 +160,16 @@ services:
       volumes:
           -  cert-volume:/etc/openelis-global
           # -  openelis-plugins-data:/var/lib/openelis-global/plugins
-          -  openelis-server-data:/usr/local/tomcat/conf
-          -  openelis-properties-data:/run/secrets
+          - ./volume/tomcat/oe_server.xml:/usr/local/tomcat/conf/server.xml
+      secrets:
+            - source: datasource.password
+            - source: common.properties
           
   fhir.openelis.org:
       container_name: external-fhir-api
       image: hapiproject/hapi:v5.5.1
       # ports:
-          # - "8081:8080"
-        # - "8444:8443"
+        # - "8081:8080"
       restart: always
       environment:
           - hapi.fhir.auto_create_placeholder_reference_targets=true
@@ -182,9 +181,19 @@ services:
       image: hapiproject/hapi:v5.5.1
       ports:
           - "8081:8080"
-        # - "8444:8443"
       restart: always
       environment:
           - hapi.fhir.auto_create_placeholder_reference_targets=true
           - hapi.fhir.allow_placeholder_references=true   
-          - hapi.fhir.allow_external_references=true     
+          - hapi.fhir.allow_external_references=true  
+
+secrets:
+  datasource.password:
+    file: ./volume/properties/datasource.password  
+  common.properties:
+    file:  ./volume/properties/common.properties  
+
+volumes:
+  db-data:
+  cert-volume:
+              
