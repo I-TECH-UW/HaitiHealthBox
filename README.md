@@ -30,8 +30,14 @@ git checkout v0.0.0-alpha
 
 Otherwise, you can use the latest `main` branch that is the default. 
 
+## Step Three: Set some configurations
+Set some temporary variables to store your desired iSantePlus Database and iSantePlus admin passwords:
 
-## Step Three: Boot up Docker Enviornment
+```sh
+export IPLUS_ADMIN_PW=<your-password>
+export IPLUS_DB_PW=<your-password>
+```
+## Step Four: Boot up Docker Enviornment
 Navigate to the `HaitiHealthBox` directory on your machine and run the following command:
 ```sh
 docker-compose up -d

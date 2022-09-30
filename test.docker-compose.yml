@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:  
+  # QA Framework
+  qa:
+    image: ghcr.io/isanteplus/isanteplus-qaframework:latest
+    container_name: qa
+    environment:
+      - ISANTEPLUS_URL=http://isanteplus:8080/openmrs
+      - ISANTEPLUS_USER=admin
+      - ISANTEPLUS_PW=Admin123
+      - REMOTE_URL_CHROME=http://chrome:4444/wd/hub
+      - TEST_OPTIONS="-Dcucumber.filter.tags=@login"
+    networks:
+      - local_facility
+
+  chrome:
+    image: selenium/standalone-chrome:latest
+    hostname: chrome
+    container_name: chrome
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    networks:
+      - local_facility
+  # Newman Tests
+  newman:
+    image: postman/newman
+    volumes:
+      - ./.postman:/.postman
+    entrypoint: newman run $POSTMAN_COLLECTION -e /.postman/env.json --insecure --timeout-request 20000 --delay-request 1000
+    networks:
+      - local_facility
+
+  wait:
+    container_name: wait
+    image: ghcr.io/i-tech-uw/wait-for-openmrs-action:v0.4.0 
+    command:
+    - "http://isanteplus:8080/openmrs"
+    - "20" 
+    - "10000"
+    networks:
+      - local_facility
+
+networks:
+  local_facility:
+    external: true
+    name: haitihealthbox_local_facility
