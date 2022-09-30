@@ -9,6 +9,8 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+env:
+  IPLUS_DB_PW: mysqlpw
 jobs:
   CI:
     runs-on: ubuntu-latest
