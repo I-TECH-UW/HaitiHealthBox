@@ -14,8 +14,8 @@ services:
     volumes:
       - ./certs/:/etc/certs/       
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./configs/conf.yaml:/conf/conf.yaml  
-      - ./configs/traefik.yaml:/etc/traefik/traefik.yaml
+      - ./volume/traefik/conf.yaml:/conf/conf.yaml  
+      - ./volume/traefik/traefik.yaml:/etc/traefik/traefik.yaml
     
   ###
   # iSantePlus Server
@@ -34,6 +34,8 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
+    ports:
+      - 8080:8080
 
   isanteplus-mysql:
     image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
@@ -52,8 +54,6 @@ services:
     volumes:
       - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
       - /var/lib/mysql
-    ports:
-    - "3306:3306"
 
   ###
   # OpenHIM
@@ -76,7 +76,10 @@ services:
       - hie
     volumes:
       - ./configs/openhim/healthcheck.js:/healthcheck.js
-
+    ports:
+      - 5000
+      - 5001
+      - 8080
   openhim-console:
     container_name: openhim-console
     hostname: openhim-console
@@ -91,13 +94,15 @@ services:
       retries: 3
     networks:
       - hie
+    ports:
+      3000:80
 
   # Loads Default OpenHIM Config
   openhim-config:
     container_name: openhim-config
     image: ghcr.io/i-tech-uw/openhim-config:v0.0.0
     volumes:
-      - ./configs/openhim/test-openhim-config.json:/app/test-openhim-config.json
+      - ./volume/openhim/initial-config.json:/app/test-openhim-config.json
     networks:
       - hie
 
