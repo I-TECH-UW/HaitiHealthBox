@@ -27,7 +27,8 @@ jobs:
 
       - name: Start all containers
         run: docker-compose up -d
-              - name: Sleep for 120 seconds
+      
+      - name: Sleep for 120 seconds
         run: sleep 120
         shell: bash
 
