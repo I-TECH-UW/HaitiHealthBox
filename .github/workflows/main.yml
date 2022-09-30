@@ -39,7 +39,7 @@ jobs:
         run: docker logs isanteplus
 
       - name: Wait For OpenMRS
-        run: docker-compose --profile=utility up  --exit-code-from wait-for-openmrs wait-for-openmrs
+        run: docker-compose -f test.docker-compose.yml up --exit-code-from wait wait
 
       - name: Restart streaming pipeline
         run: docker-compose up -d --force-recreate streaming-pipeline
