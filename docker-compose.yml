@@ -5,27 +5,67 @@ services:
   # reverse proxy
   ###
   traefik:
-    image: traefik:v2.6.1
+    image: traefik:${VERSION}
     container_name: traefik
+    restart: ${RESTART}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certs/:/etc/certs/
+      # - ./certs/:/etc/certs/
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./volume/traefik/conf.yaml:/conf/conf.yaml
-      - ./volume/traefik/traefik.yaml:/etc/traefik/traefik.yaml
-
+    command: 
+      - --api.insecure=false
+      - --api.dashboard=true
+      - --providers.docker=true 
+      - --providers.docker.exposedbydefault=false 
+      - --log.level=${LOG}
+      - --entrypoints.web.address=:80 
+      - --entrypoints.web-secure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=web-secure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web-secure.http.tls.domains[0].main=${ROOT_URL}
+      - --entrypoints.web-secure.http.tls.domains[0].sans=*.${ROOT_URL}
+      # - --providers.file.watch=true
+      # - --providers.file.directory=/etc/traefik/dynamic_conf
+      - --certificatesresolvers.${PROVIDER}.acme.dnschallenge=true
+      - --certificatesresolvers.${PROVIDER}.acme.dnschallenge.provider=${PROVIDER}
+      - --certificatesresolvers.${PROVIDER}.acme.dnschallenge.delayBeforeCheck=0
+      - --certificatesresolvers.${PROVIDER}.acme.dnschallenge.resolvers=${RESOLVER}
+      - --certificatesresolvers.${PROVIDER}.acme.email=${EMAIL}
+      - --certificatesresolvers.${PROVIDER}.acme.storage=/certs/acme.json
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=haitihealthbox_local_facility'
+      - "traefik.http.routers.api.rule=Host(`traefik.${ROOT_URL}`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - 'traefik.http.routers.api.tls=true'
+      - 'traefik.http.routers.api.entrypoints=web-secure'
+      - "traefik.http.routers.api.tls.certresolver=${PROVIDER}"
+    networks:
+      - local_facility
+    environment: 
+      - TZ
+      - AWS_ACCESS_KEY_ID
+      - AWS_REGION
+      - AWS_SECRET_ACCESS_KEY
   ###
   # iSantePlus Server
   ###
   isanteplus:
     container_name: isanteplus
     hostname: isanteplus
-    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.7
+    image: ghcr.io/isanteplus/docker-isanteplus-server:${ISANTEPLUS_VERSION-latest}
     restart: unless-stopped
-    env_file:
-      - ./isanteplus.env
+    environment:
+      - OMRS_CONFIG_CREATE_TABLES=false
+      - OMRS_CONFIG_ADD_DEMO_DATA=false
+      - OMRS_CONFIG_CONNECTION_URL=jdbc:mysql://${DB_HOST_NAME-isanteplus-mysql}:${DB_PORT-3306}/openmrs?autoReconnect=true
+      - OMRS_CONFIG_HAS_CURRENT_OPENMRS_DATABASE=true
+      - OMRS_JAVA_SERVER_OPTS="-Dfile.encoding=UTF-8 -server -Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Djava.awt.headlesslib=true"
+      - OMRS_CONFIG_CONNECTION_USERNAME=${DB_USER-mysqluser}
+      - OMRS_CONFIG_CONNECTION_PASSWORD=${DB_PASSWORD-mysqlpw}
+      - OMRS_DEV_DEBUG_PORT=1044    
     volumes:
       - /openmrs/data
       - ./custom_modules:/custom_modules
@@ -39,7 +79,7 @@ services:
       - local_facility
 
   isanteplus-mysql:
-    image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
+    image: ghcr.io/isanteplus/docker-isanteplus-db:${ISANTEPLUS_DB_VERSION-latest}
     command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --sql_mode=""
     restart: unless-stopped
     container_name: isanteplus-mysql
@@ -47,13 +87,13 @@ services:
     healthcheck:
       test: "exit 0"
     environment:
-      - MYSQL_DATABASE=openmrs
-      - MYSQL_ROOT_PASSWORD=debezium
-      - MYSQL_USER=mysqluser
-      - MYSQL_PASSWORD=${IPLUS_DB_PW-mysqlpw}
+      - MYSQL_DATABASE=${DB_NAME-openmrs}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD-debezium}
+      - MYSQL_USER=${DB_USER-mysqluser}
+      - MYSQL_PASSWORD=${DB_PASSWORD-mysqlpw}
       - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
     volumes:
-      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
+      - ./volume/database/isanteplus/mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
       - /var/lib/mysql
     networks:
       - local_facility
