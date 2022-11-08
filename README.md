@@ -43,3 +43,6 @@ Navigate to the `HaitiHealthBox` directory on your machine and run the following
 docker-compose up -d
 ```
 
+## Step Five: Register instance in Sedish
+
+## Step Six: test SHR pipe
