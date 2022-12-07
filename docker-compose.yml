@@ -1,86 +1,72 @@
 version: "3.8"
 
 services:
-  ###
-  # reverse proxy
-  ###
-  traefik:
-    image: traefik:v2.6.1
-    container_name: traefik
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./certs/:/etc/certs/
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./volume/traefik/conf.yaml:/conf/conf.yaml
-      - ./volume/traefik/traefik.yaml:/etc/traefik/traefik.yaml
 
-  ###
-  # iSantePlus Server
-  ###
-  isanteplus:
-    container_name: isanteplus
-    hostname: isanteplus
-    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.7
-    restart: unless-stopped
-    env_file:
-      - ./isanteplus.env
-    volumes:
-      - /openmrs/data
-      - ./custom_modules:/custom_modules
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
+  openmrs-mysql:
+    restart: "always"
+    image: mysql:5.6
+    platform: linux/x86_64
+    container_name: emr-mysql
+    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
     ports:
-      - 8080:8080
-    networks:
-      - local_facility
-
-  isanteplus-mysql:
-    image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --sql_mode=""
-    restart: unless-stopped
-    container_name: isanteplus-mysql
-    hostname: isanteplus-mysql
-    healthcheck:
-      test: "exit 0"
+      - "3306:3306"
     environment:
       - MYSQL_DATABASE=openmrs
-      - MYSQL_ROOT_PASSWORD=debezium
-      - MYSQL_USER=mysqluser
-      - MYSQL_PASSWORD=${IPLUS_DB_PW-mysqlpw}
-      - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
-    volumes:
-      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
-      - /var/lib/mysql
-    networks:
-      - local_facility
-  
-  streaming-pipeline: 
-    image: ghcr.io/i-tech-uw/openmrs-fhir-analytics/streaming-binlog:latest
-    container_name: streaming-pipeline
+      - MYSQL_ROOT_PASSWORD=Admin123
+      - MYSQL_USER=openmrs
+      - MYSQL_PASSWORD=Admin123
+      - MYSQL_ROOT_HOST=%  
     healthcheck:
       test: "exit 0"
     volumes:
-      - ./configs/streaming-pipeline/config.json:/deployments/config.json
-      # data is the directory which you want to persist the generated parquet files
-      # - ./configs/streaming-pipeline/parquet:/tmp
+      - openmrs-referenceapplication-mysql-data:/var/lib/mysql
+      #- ./data:/var/lib/mysql
+      - ./volumes/openmrs/dbdump:/docker-entrypoint-initdb.d 
+
+  openmrs-server:
+    restart: "always"
+    image: openmrs/openmrs-reference-application-distro:2.11.0
+    container_name: emr-server
+    depends_on:
+      - openmrs-mysql
+    # ports:
+    #   - "8090:8080"
     environment:
-      - OPENMRS_URL=http://isanteplus:8080/openmrs
-      - OPENMRS_USERNAME=admin
-      - OPENMRS_PASSWORD=${IPLUS_ADMIN_PW-Admin123}
-      - SINK_URL=https://openhim-ssl.sedish-haiti.org/SHR/fhir
-      - SINK_USERNAME=${OPENHIM_STREAMING_CLIENT-streaming}
-      - SINK_PASSWORD=${OPENHIM_STREAMING_PW-streaming}
-      - JDBC_FETCH_SIZE=10000
-      - JDBC_MAX_POOL_SIZE=50
-      - JDBC_INITIAL_POOL_SIZE=10
-      - JDBC_DRIVER_CLASS=com.mysql.cj.jdbc.Driver
-      # the 2 variable below should be same as volume mappings above
-      - PARQUET_PATH=
-      - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/config.json
+      DB_DATABASE: ${MYSQL_DB:-openmrs}
+      DB_HOST: openmrs-mysql
+      DB_USERNAME: ${MYSQL_USER:-openmrs}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-Admin123}
+      DB_CREATE_TABLES: 'false'
+      DB_AUTO_UPDATE: 'false'
+      MODULE_WEB_ADMIN: 'true'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/openmrs/"]
+      timeout: 20s
+    volumes:
+      # - openmrs-referenceapplication-data:/usr/local/tomcat/.OpenMRS/
+      - ./volumes/openmrs/modules:/usr/local/tomcat/.OpenMRS/modules/ # do not store modules in data
+      - ./volumes/openmrs/owa:/usr/local/tomcat/.OpenMRS/owa/ # do not store owa in data
+
+  gateway:
+    image: openmrs/openmrs-reference-application-3-gateway:nightly
+    depends_on:
+      - openmrs3x-frontend
+      - openmrs-server
+    volumes:
+       - ./volumes/nginix/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+
+  openmrs3x-frontend:
+    image: openmrs/openmrs-reference-application-3-frontend:nightly
+    environment:
+      SPA_PATH: /openmrs/spa
+      API_URL: /openmrs
+      SPA_CONFIG_URLS: /openmrs/spa/config.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+    
+  
   ###
   # OpenHIM
   ###
@@ -93,26 +79,20 @@ services:
       mongo_url: "mongodb://mongo-db/openhim"
       mongo_atnaUrl: "mongodb://mongo-db/openhim"
       NODE_ENV: "development"
-    healthcheck:
-      test: "node /healthcheck.js"
-      interval: 20s
-      timeout: 20s
-      retries: 2
-    volumes:
-      - ./configs/openhim/healthcheck.js:/healthcheck.js
     ports:
-      - 5000
-      - 5001
-      - 8090:8080
-    networks:
-      - local_facility
+      - "8085:8080"
+      # - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      - mongo-db
+
   openhim-console:
     container_name: openhim-console
     hostname: openhim-console
     image: jembi/openhim-console:latest
     restart: unless-stopped
     volumes:
-      - ./volume/openhim/console.json:/usr/share/nginx/html/config/default.json
+      - ./volumes/openhim/console.json:/usr/share/nginx/html/config/default.json
     healthcheck:
       test: "curl -sS http://openhim-console || exit 1"
       interval: 10s
@@ -120,24 +100,21 @@ services:
       retries: 3
     ports: 
       - 3000:80
-    networks:
-      - local_facility
+
   # Loads Default OpenHIM Config
   openhim-config:
     container_name: openhim-config
     image: ghcr.io/i-tech-uw/openhim-config:v0.0.0
     volumes:
-      - ./volume/openhim/initial-config.json:/app/test-openhim-config.json
-    networks:
-      - local_facility
+      - ./volumes/openhim/initial-config.json:/app/test-openhim-config.json
+
   mongo-db:
     container_name: mongo-db
     image: mongo:3.4
     volumes:
       - /data/db
     restart: unless-stopped
-    networks:
-      - local_facility
+
   ####
   # OpenELIS
   ####
@@ -150,23 +127,21 @@ services:
       - TRUSTSTORE_PW="tspass"
     volumes:
       - cert-volume:/etc/openelis-global
-    networks:
-      - local_facility
-  database:
+
+  oe-database:
     container_name: openelisglobal-database
     image: postgres:9.5
     ports:
       - "15432:5432"
     restart: always
     env_file:
-      - ./volume/database/database.env
+      - ./volumes/openelis/database/database.env
     volumes:
       # preserves the database between containers
       - db-data:/var/lib/postgresql/data
         # files here will run on install
-      - ./volume/database/dbInit:/docker-entrypoint-initdb.d
-    networks:
-      - local_facility
+      - ./volumes/openelis/database/dbInit:/docker-entrypoint-initdb.d
+
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "clinlims", "-U", "clinlims"]
       timeout: 45s
@@ -177,24 +152,23 @@ services:
     container_name: openelisglobal-webapp
     image: ghcr.io/i-tech-uw/openelis-global-2:develop
     depends_on:
-      - database
+      - oe-database
     ports:
-      - "8095:8080"
+      - "8080:8080"
       - "8443:8443"
     restart: always
     environment:
       - TZ=Africa/Nairobi
         # context.xml doesn't seem to be able to pick up environment variables directly, so we are passing them in as CATALINA_OPTS
-      - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://database:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=clinlims
+      - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://oe-database:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=clinlims
     volumes:
       - cert-volume:/etc/openelis-global
       # -  openelis-plugins-data:/var/lib/openelis-global/plugins
-      - ./volume/tomcat/oe_server.xml:/usr/local/tomcat/conf/server.xml
+      - ./volumes/openelis/tomcat/oe_server.xml:/usr/local/tomcat/conf/server.xml
     secrets:
       - source: datasource.password
       - source: common.properties
-    networks:
-      - local_facility
+
 
   fhir.openelis.org:
     container_name: external-fhir-api
@@ -206,31 +180,29 @@ services:
       - hapi.fhir.auto_create_placeholder_reference_targets=true
       - hapi.fhir.allow_placeholder_references=true
       - hapi.fhir.allow_external_references=true
-    networks:
-      - local_facility
+
 
   fhir.openelis.org.remote:
     container_name: openelis-remote-source
     image: hapiproject/hapi:v5.5.1
-    ports:
-      - "8081:8080"
+    # ports:
+    #   - "8081:8080"
     restart: always
     environment:
       - hapi.fhir.auto_create_placeholder_reference_targets=true
       - hapi.fhir.allow_placeholder_references=true
       - hapi.fhir.allow_external_references=true
-    networks:
-      - local_facility
+
 
 secrets:
   datasource.password:
-    file: ./volume/properties/datasource.password
+    file: ./volumes/openelis/properties/datasource.password
   common.properties:
-    file: ./volume/properties/common.properties
+    file: ./volumes/openelis/properties/common.properties
 
 volumes:
   db-data:
   cert-volume:
+  openmrs-referenceapplication-mysql-data:
+  openmrs-referenceapplication-data:
 
-networks:
-  local_facility:
