@@ -19,9 +19,9 @@ services:
       - certs 
      
 
-  ###
-  # iSantePlus Server
-  ###
+  ##
+  #iSantePlus Server
+  ##
   isanteplus:
     container_name: isanteplus
     hostname: isanteplus
@@ -31,7 +31,7 @@ services:
       - ./isanteplus.env
     volumes:
       - /openmrs/data
-      - .volume/isanteplus/custom_modules:/custom_modules
+      - ./volume/isanteplus/custom_modules:/custom_modules
     logging:
       driver: "json-file"
       options:
@@ -54,7 +54,7 @@ services:
       - MYSQL_PASSWORD=${IPLUS_DB_PW-mysqlpw}
       - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
     volumes:
-      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
+     # - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium
       - /var/lib/mysql
    
   
@@ -93,11 +93,6 @@ services:
       mongo_url: "mongodb://mongo-db/openhim"
       mongo_atnaUrl: "mongodb://mongo-db/openhim"
       NODE_ENV: "development"
-    # healthcheck:
-    #   test: "node /healthcheck.js"
-    #   interval: 20s
-    #   timeout: 20s
-    #   retries: 2
   
     ports:
     #   - 5000
