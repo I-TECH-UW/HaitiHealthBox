@@ -9,7 +9,7 @@ services:
     container_name: nginx
     restart: always
     ports:
-      - 80:80
+      # - 80:80
       - 443:443
     volumes:
       - certs-vol:/etc/nginx/certs/
@@ -32,6 +32,8 @@ services:
     volumes:
       - /openmrs/data
       - ./volume/isanteplus/custom_modules:/custom_modules
+    # ports:
+    #   - 8081:8080  
     logging:
       driver: "json-file"
       options:
@@ -51,7 +53,7 @@ services:
       - MYSQL_DATABASE=openmrs
       - MYSQL_ROOT_PASSWORD=debezium
       - MYSQL_USER=mysqluser
-      - MYSQL_PASSWORD=${IPLUS_DB_PW-mysqlpw}
+      - MYSQL_PASSWORD=mysqlpw
       - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
     volumes:
      # - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf # mysql config preconfigured to allow binlog/debezium

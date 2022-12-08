@@ -43,3 +43,20 @@ Navigate to the `HaitiHealthBox` directory on your machine and run the following
 docker-compose up -d
 ```
 
+## Local setup
+
+Spin up the services
+
+```
+docker-compose -f docker-compose.local.yml up -d
+```
+
+Acces the services at 
+
+| Instance  |     URL       | credentials (user : password)|
+|---------- |:-------------:|------:                       |
+| Isanteplus   |  https://localhost/openmrs/login.htm  | admin : Admin123 |
+| OpenHIM   |    http://localhost/  |  root@openhim.org : admin |
+| OpenELIS | https://localhost/OpenELIS-Global/ |    admin : adminADMIN!| 
+
+
