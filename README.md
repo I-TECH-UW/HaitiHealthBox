@@ -56,7 +56,7 @@ Acces the services at
 | Instance  |     URL       | credentials (user : password)|
 |---------- |:-------------:|------:                       |
 | Isanteplus   |  https://localhost/openmrs/login.htm  | admin : Admin123 |
-| OpenHIM   |    http://localhost/  |  root@openhim.org : admin |
+| OpenHIM   |    https://localhost/  |  root@openhim.org : admin |
 | OpenELIS | https://localhost/OpenELIS-Global/ |    admin : adminADMIN!| 
 
 
