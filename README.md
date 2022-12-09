@@ -59,4 +59,13 @@ Acces the services at
 | OpenHIM   |    https://localhost/  |  root@openhim.org : admin |
 | OpenELIS | https://localhost/OpenELIS-Global/ |    admin : adminADMIN!| 
 
+# Instructions 
+Add the necesary Lab Unit permisions to the User ie 
+`Admin -> User Management -> Select User -> Under Roles ,Select a Lab Unit and the Permision`
+
+Enable Importing electronic orders 
+`Admin -> Order Entry Configuration -> Select external orders -> Click Modify -> select True`
+
+Add the Right Test Catalogue ie tests with Loinc Codes
+
 
