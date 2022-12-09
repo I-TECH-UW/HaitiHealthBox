@@ -61,11 +61,11 @@ Acces the services at
 
 ## Instructions 
 1. Add the necesary Lab Unit permisions to the User      
-`Admin -> User Management -> Select User -> Under Roles ,Select a Lab Unit and the Permision`
+Go To `Admin -> User Management -> Select User -> Under "Roles" ,Choose a "ALL Lab Units" and select  "All Permissions"`
 
 2. Enable Importing electronic orders       
-`Admin -> Order Entry Configuration -> Select external orders -> Click Modify -> select True`
+Go To `Admin -> Order Entry Configuration -> Select "external orders" -> Click "Modify" -> select "True"`
 
-3. Add the Right Test Catalogue ie tests with Loinc Codes
+3. Add the Right Test Catalogue ie tests with `Loinc Codes`
 
 
