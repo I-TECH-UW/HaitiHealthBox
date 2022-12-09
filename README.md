@@ -61,7 +61,7 @@ Acces the services at
 
 ## Instructions 
 1. Add the necesary Lab Unit permisions to the User      
-Go To `Admin -> User Management -> Select User -> Under "Roles" ,Choose a "ALL Lab Units" and select  "All Permissions"`
+Go To `Admin -> User Management -> Select User -> Under "Roles" ,Choose "ALL Lab Units" and select  "All Permissions"`
 
 2. Enable Importing electronic orders       
 Go To `Admin -> Order Entry Configuration -> Select "external orders" -> Click "Modify" -> select "True"`
