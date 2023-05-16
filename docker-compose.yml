@@ -5,11 +5,11 @@ services:
   openmrs-mysql:
     restart: "always"
     image: mysql:5.6
-    platform: linux/x86_64
+   # platform: linux/x86_64
     container_name: emr-mysql
     command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
-    ports:
-      - "3306:3306"
+     ports:
+    - "3306:3306"
     environment:
       - MYSQL_DATABASE=openmrs
       - MYSQL_ROOT_PASSWORD=Admin123
@@ -58,7 +58,7 @@ services:
       - "80:80"
 
   openmrs3x-frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:nightly
+    image: openmrs/openmrs-reference-application-3-frontend:3.0.0-alpha.10
     environment:
       SPA_PATH: /openmrs/spa
       API_URL: /openmrs
@@ -73,7 +73,7 @@ services:
   openhim-core:
     container_name: openhim-core
     hostname: openhim-core
-    image: jembi/openhim-core:latest
+    image: jembi/openhim-core:v7.1.0
     restart: unless-stopped
     environment:
       mongo_url: "mongodb://mongo-db/openhim"
@@ -89,7 +89,7 @@ services:
   openhim-console:
     container_name: openhim-console
     hostname: openhim-console
-    image: jembi/openhim-console:latest
+    image: jembi/openhim-console:v1.15.0
     restart: unless-stopped
     volumes:
       - ./volumes/openhim/console.json:/usr/share/nginx/html/config/default.json
