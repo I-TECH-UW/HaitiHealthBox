@@ -18,7 +18,7 @@ Acces the services at
 ## Instructions 
 see [Instructions](https://wiki.openmrs.org/display/projects/Order+Entry+UI+Administrator+Guide#OrderEntryUIAdministratorGuide-SettingsandConfiguration) to configure the Lab Order Entry Owa
 
-###Configure the LIS
+### Configure the LIS
 1. Add the necesary Lab Unit permisions to the User      
 Go To `Admin -> User Management -> Select User -> Under "Roles" ,Choose "ALL Lab Units" and select  "All Permissions"`
 
