@@ -68,6 +68,6 @@ Go To `Admin -> Order Entry Configuration -> Select "external orders" -> Click "
 
 3. Add the Right Test Catalogue ie tests with `Loinc Codes`
 
-se [more](https://i-tech-uw.github.io/healthinformationexchange/lis-workflows/lis-workflows.html#tutorial-lab-order-communication-between-openmrs-and-openelis) for the EMR-LIS communication
+see [more](https://i-tech-uw.github.io/healthinformationexchange/lis-workflows/lis-workflows.html#tutorial-lab-order-communication-between-openmrs-and-openelis) for the EMR-LIS communication
 
 
