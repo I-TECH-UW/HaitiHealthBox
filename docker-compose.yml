@@ -4,17 +4,65 @@ services:
   ###
   # reverse proxy
   ###
-  traefik:
-    image: traefik:v2.6.1
-    container_name: traefik
+  # traefik:
+  #   image: traefik:v2.6.1
+  #   container_name: traefik
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./certs/:/etc/certs/
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./volume/traefik/conf.yaml:/conf/conf.yaml
+  #     - ./volume/traefik/traefik.yaml:/etc/traefik/traefik.yaml
+
+
+  caddy:
+    container_name: caddy
+    build:
+      context: ./caddy
+      dockerfile: Dockerfile
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
+    environment:
+      - CADDY_INGRESS_NETWORKS=local_facility
     volumes:
-      - ./certs/:/etc/certs/
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./volume/traefik/conf.yaml:/conf/conf.yaml
-      - ./volume/traefik/traefik.yaml:/etc/traefik/traefik.yaml
+      - caddy-data:/data
+      - ./ruleset:/ruleset
+      - audit:/audit
+      - ./caddy/Caddyfile:/Caddyfile
+    restart: unless-stopped
+    networks:
+      - local_facility
+
+  # Logging
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.4.0
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+      - node.name=elastic
+      - discovery.type=single-node
+      - cluster.name=ELASTIC
+      - MEM_LIMIT=1073741824
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    networks: 
+      - local_facility      
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.4.0
+    restart: always
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=http://elastic:9200
+      - MEM_LIMIT=1073741824
+      - xpack.security.enabled=false
+    depends_on:
+      - elastic
+    networks:
+      - local_facility
 
   ###
   # iSantePlus Server
@@ -33,10 +81,12 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-    ports:
-      - 8080:8080
     networks:
-      - local_facility
+      - local_facility    
+    # labels:
+    #   caddy: localhost
+    #   caddy.handle_path: /openmrs/*
+    #   caddy.handle_path.0_reverse_proxy: "{{ upstreams 8080 }}"
 
   isanteplus-mysql:
     image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
@@ -81,6 +131,8 @@ services:
       # the 2 variable below should be same as volume mappings above
       - PARQUET_PATH=
       - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/config.json
+    networks:
+      - local_facility
   ###
   # OpenHIM
   ###
@@ -101,27 +153,28 @@ services:
     volumes:
       - ./configs/openhim/healthcheck.js:/healthcheck.js
     ports:
-      - 5000
-      - 5001
-      - 8090:8080
+      - "5000:5000"
+      - "8080:8080"
+      - "5001:5001"
     networks:
       - local_facility
+
   openhim-console:
     container_name: openhim-console
     hostname: openhim-console
     image: jembi/openhim-console:latest
     restart: unless-stopped
     volumes:
-      - ./volume/openhim/console.json:/usr/share/nginx/html/config/default.json
+      - ./volume/openhim/console.json:/usr/share/nginx/html/config/default.json:ro
     healthcheck:
       test: "curl -sS http://openhim-console || exit 1"
       interval: 10s
       timeout: 60s
       retries: 3
-    ports: 
-      - 3000:80
     networks:
       - local_facility
+    ports:
+      - "9000:80"
   # Loads Default OpenHIM Config
   openhim-config:
     container_name: openhim-config
@@ -231,6 +284,8 @@ secrets:
 volumes:
   db-data:
   cert-volume:
-
+  audit:
+  elasticsearch-data:
+  caddy-data:
 networks:
   local_facility:

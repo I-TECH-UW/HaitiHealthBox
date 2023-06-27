@@ -1,0 +1,34 @@
+{
+        order coraza_waf first
+}
+
+:80 {
+    handle /openmrs/* {
+        reverse_proxy isanteplus:8080
+    }
+
+    handle_path /openhim/* {
+        reverse_proxy openhim-console:80
+    }
+
+    handle_path /openhim-core-http/* {
+        reverse_proxy openhim-core:5001
+    }
+    
+    handle_path /openhim-core-ssl/* {
+        reverse_proxy openhim-core:5000 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+        
+    }
+
+    handle_path /openhim-core-api/* {
+        reverse_proxy openhim-core:8080 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+    }
+}
