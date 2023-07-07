@@ -1,0 +1,8 @@
+version: '3.9'
+
+services:
+  lis-openelis-global:
+    ports:
+      - target: 8080
+        published: 8091
+        mode: host

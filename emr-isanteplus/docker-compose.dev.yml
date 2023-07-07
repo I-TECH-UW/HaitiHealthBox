@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  emr-isanteplus:
+    ports:
+      - target: 1044
+        published: 1044
+        mode: host
+    environment:
+      - OMRS_DEV_DEBUG_PORT=1044

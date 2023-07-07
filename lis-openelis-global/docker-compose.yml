@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  oe.openelis.org:
+    container_name: openelisglobal-webapp
+    image: ghcr.io/i-tech-uw/openelis-global-2:develop
+    restart: always
+    environment:
+      - TZ=Africa/Nairobi
+        # context.xml doesn't seem to be able to pick up environment variables directly, so we are passing them in as CATALINA_OPTS
+      - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://database:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=clinlims
+    volumes:
+      - cert-volume:/etc/openelis-global
+      # -  openelis-plugins-data:/var/lib/openelis-global/plugins
+    secrets:
+      - source: datasource.password
+      - source: common.properties
+    networks:
+      - default
+      - openelis
+    configs:
+      - source: oe_server.xml
+        file: ./config/oe_server.xml
+        target: /usr/local/tomcat/conf/server.xml
+        
+  configs:
+    oe_server.xml:
+      file: ./oe_server.xml
+
+  secrets:
+    datasource.password:
+      file: ./config/datasource.password
+    common.properties:
+      file: ./config/common.properties
+  volumes:
+    cert-volume:
+      external: true
+      name: openelis-global-certs
+    openelis-plugins-data:
+  networks:
+    openelis:
+      external: true
+      name: openelis
+    default:

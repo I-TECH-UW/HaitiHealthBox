@@ -1,0 +1,9 @@
+{
+  "id": "openhim-mediator-data-stream",
+  "name": "iSantePlus Data Stream",
+  "description": "Streaming service for data from iSantePlus to a FHIR store.",
+  "type": "use-case",
+  "version": "0.0.1",
+  "dependencies": [],
+  "environmentVariables": {}
+}

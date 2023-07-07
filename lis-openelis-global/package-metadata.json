@@ -1,0 +1,9 @@
+{
+  "id": "lis-openelis-global",
+  "name": "OpenELIS Global Lab Information System",
+  "description": "An open-source lab information management system designed for global health use.",
+  "type": "infrastructure",
+  "version": "0.0.1",
+  "dependencies": [],
+  "environmentVariables": {}
+}

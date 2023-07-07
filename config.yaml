@@ -1,0 +1,10 @@
+projectName: Haiti Health Box
+image: itechuw/haiti-health-box
+logPath: /tmp/logs
+
+packages:
+    - <<package-id>>
+
+{}
+
+{}

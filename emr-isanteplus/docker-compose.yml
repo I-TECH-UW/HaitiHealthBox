@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  isanteplus:
+    image: ghcr.io/isanteplus/docker-isanteplus-server:v2.3.7
+    restart: unless-stopped
+    environment:
+      - OMRS_JAVA_MEMORY_OPTS="-Xmx8192m -Xms4096m -XX:NewSize=1024m"
+      - OMRS_CONFIG_CONNECTION_SERVER=${OMRS_CONFIG_CONNECTION_SERVER:-isanteplus-mysql}
+      - OMRS_CONFIG_CREATE_DATABASE_USER=false
+      - OMRS_CONFIG_CREATE_TABLES=false
+      - OMRS_CONFIG_ADD_DEMO_DATA=false
+      - OMRS_CONFIG_CONNECTION_URL=jdbc:mysql://${OMRS_CONFIG_CONNECTION_SERVER:-isanteplus-mysql}:3306/openmrs?autoReconnect=true
+      - OMRS_CONFIG_HAS_CURRENT_OPENMRS_DATABASE=true
+      - OMRS_JAVA_SERVER_OPTS="-Dfile.encoding=UTF-8 -server -Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Djava.awt.headlesslib=true"
+      - OMRS_CONFIG_CONNECTION_USERNAME=${OMRS_CONFIG_CONNECTION_USERNAME:-mysqluser}
+      - OMRS_CONFIG_CONNECTION_PASSWORD=${OMRS_CONFIG_CONNECTION_PASSWORD:-mysqlpw}
+    volumes:
+      - /openmrs/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+    networks:
+      - public    
+      - isanteplus
+      - default
+
+networks:
+  public:
+    name: reverse-proxy_public
+    external: true
+  networks:
+    isanteplus:
+      external: true
+      name: emr-isanteplus
+  default:
