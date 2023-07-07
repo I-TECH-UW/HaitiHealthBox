@@ -3,8 +3,10 @@ image: itechuw/haiti-health-box
 logPath: /tmp/logs
 
 packages:
-    - <<package-id>>
-
-{}
-
-{}
+    - identity-access-manager-keycloak
+    - interoperability-layer-openhim
+    - lis-openelis-global
+    - monitoring
+    - emr-isanteplus
+    - openhim-mediator-data-stream
+    - reverse-proxy-caddy
