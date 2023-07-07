@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  fhir.openelis.org:
+    container_name: external-fhir-api
+    image: hapiproject/hapi:v5.5.1
+    restart: always
+    environment:
+      - hapi.fhir.auto_create_placeholder_reference_targets=true
+      - hapi.fhir.allow_placeholder_references=true
+      - hapi.fhir.allow_external_references=true
+    networks:
+      - default
+      - openelis
+
+  fhir.openelis.org.remote:
+    container_name: openelis-remote-source
+    image: hapiproject/hapi:v5.5.1
+    restart: always
+    environment:
+      - hapi.fhir.auto_create_placeholder_reference_targets=true
+      - hapi.fhir.allow_placeholder_references=true
+      - hapi.fhir.allow_external_references=true
+    networks:
+      - default
+      - openelis
+
+networks:
+  openelis:
+    external: true
+    name: openelis

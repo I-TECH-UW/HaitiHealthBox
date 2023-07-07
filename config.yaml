@@ -1,0 +1,12 @@
+projectName: Haiti Health Box
+image: itechuw/haiti-health-box
+logPath: /tmp/logs
+
+packages:
+    - identity-access-manager-keycloak
+    - interoperability-layer-openhim
+    - lis-openelis-global
+    - monitoring
+    - emr-isanteplus
+    - openhim-mediator-data-stream
+    - reverse-proxy-caddy

@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  certs:
+    container_name: oe-certs
+    image: ghcr.io/i-tech-uw/certgen:main
+    restart: always
+    environment:
+      - KEYSTORE_PW="kspass"
+      - TRUSTSTORE_PW="tspass"
+    volumes:
+      - cert-volume:/etc/openelis-global
+    networks:
+      - default
+      - openelis
+  networks:
+    openelis:
+      external: true
+      name: openelis

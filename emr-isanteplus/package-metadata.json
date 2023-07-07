@@ -1,0 +1,9 @@
+{
+  "id": "emr-isanteplus",
+  "name": "iSantePlus Haiti EMR",
+  "description": "OpenMRS-based EMR for Haiti",
+  "type": "infrastructure",
+  "version": "0.0.1",
+  "dependencies": [],
+  "environmentVariables": {}
+}

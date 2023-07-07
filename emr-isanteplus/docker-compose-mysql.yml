@@ -1,0 +1,34 @@
+  isanteplus-mysql:
+    image: ghcr.io/isanteplus/docker-isanteplus-db:v2.2.1
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --sql_mode=""
+    restart: unless-stopped
+    container_name: isanteplus-mysql
+    hostname: isanteplus-mysql
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - MYSQL_DATABASE=openmrs
+      - MYSQL_ROOT_PASSWORD=debezium
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=${IPLUS_DB_PW-mysqlpw}
+      - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
+    volumes:
+      - /var/lib/mysql
+    configs:
+      - source: mysql.cnf
+        target: /etc/mysql/conf.d/mysql.cnf
+        
+    networks:
+      - isanteplus
+      - default
+  configs: 
+    mysql.cnf:
+      file: ./config/mysql.cnf
+      name: mysql.cnf-${mysql_cnf_DIGEST:?err}
+      labels:
+        name: isanteplus
+  networks:
+    isanteplus:
+      external: true
+      name: emr-isanteplus
+  default:
