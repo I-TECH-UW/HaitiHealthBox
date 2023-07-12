@@ -1,0 +1,11 @@
+tls:
+  certificates:
+    - certFile: /etc/certs/live/default/fullchain.pem
+      keyFile: /etc/certs/live/default/privkey.pem
+      stores:
+        - default
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/certs/live/default/fullchain.pem
+        keyFile: /etc/certs/live/default/privkey.pem
