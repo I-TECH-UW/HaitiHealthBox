@@ -89,7 +89,7 @@ services:
   openhim-core:
     container_name: openhim-core
     hostname: openhim-core
-    image: jembi/openhim-core:latest
+    image: jembi/openhim-core:v7.1.0
     restart: unless-stopped
     environment:
       mongo_url: "mongodb://mongo-db/openhim"
@@ -105,7 +105,7 @@ services:
   openhim-console:
     container_name: openhim-console
     hostname: openhim-console
-    image: jembi/openhim-console:latest
+    image: jembi/openhim-console:v1.15.0
     restart: unless-stopped
     volumes:
       - ./volume/openhim/console.json:/usr/share/nginx/html/config/default.json
@@ -170,7 +170,7 @@ services:
 
   oe.openelis.org:
     container_name: openelisglobal-webapp
-    image: ghcr.io/i-tech-uw/openelis-global-2:develop
+    image: ghcr.io/i-tech-uw/openelis-global-2:2.7.3.2
     depends_on:
       - database
     # ports:
