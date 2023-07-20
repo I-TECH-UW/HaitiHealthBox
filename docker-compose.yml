@@ -150,7 +150,7 @@ services:
 
   oe.openelis.org:
     container_name: openelisglobal-webapp
-    image: ghcr.io/i-tech-uw/openelis-global-2:develop
+    image: ghcr.io/i-tech-uw/openelis-global-2:2.7.3.2
     depends_on:
       - oe-database
     ports:

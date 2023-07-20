@@ -13,7 +13,7 @@ Acces the services at
 | Openmrs 3x   |  http://localhost/openmrs/spa  | admin : Admin123 |
 | Openmrs 2.x   |  http://localhost/openmrs/  | admin : Admin123 |
 | OpenHIM   |    http://localhost:3000/  |  root@openhim.org : admin |
-| OpenELIS | https://localhost/OpenELIS-Global/ |    admin : adminADMIN!| 
+| OpenELIS | https://localhost:8443/OpenELIS-Global/ |    admin : adminADMIN!| 
 
 ## Instructions 
 see [Instructions](https://wiki.openmrs.org/display/projects/Order+Entry+UI+Administrator+Guide#OrderEntryUIAdministratorGuide-SettingsandConfiguration) to configure the Lab Order Entry Owa
